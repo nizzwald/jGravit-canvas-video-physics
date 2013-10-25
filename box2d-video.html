@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>HTML5 Video Tiles with Drag and Drop using CANVAS Demo</title> 
+<style>
+body {
+  background-color:#ebebeb;
+}
+#box{
+  width:648px;
+  height:366px;
+  margin:0px auto;
+}
+.tile{
+  border:1px solid #fff;
+  float:left;
+}
+</style>
+</head>
+<body>
+<div>
+  <input type="button" id="breakIt" value="Break It!" />
+</div>
+
+<div style="display:none">
+    <video id="source-vid" autoplay loop="true"> 
+      <source src="video/BigBuckBunny_640x360.mp4" type="video/mp4"/> 
+      <source src="video/BigBuckBunny_640x360.ogv" type="video/ogg"/> 
+    </video> 
+</div>
+<div id="box"></div>
+<script src="http://code.jquery.com/jquery-1.7.min.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
+<script src="js/jGravity-min.js"></script>
+<script type="text/javascript">
+    ROWS = 3;
+    COLS = 4;
+    tiles(640, 360, ROWS, COLS);
+    
+    var video = $("#source-vid")[0];
+    updateVid(video);
+
+    function updateVid(video) {
+      tiles(640, 360, ROWS, COLS, video);
+      setTimeout(function() { updateVid(video) }, 33);
+
+    }
+
+    function tiles(w, h, r, c, source) {
+        var tileW = Math.round(w / c);
+        var tileH = Math.round(h / r);
+        // set rows
+        for(var ri = 0; ri < r; ri += 1) {
+          //set columns
+          for(var ci = 0; ci < c; ci += 1) {
+            //check if source is not specified.  If not, just build canvas object, otherwise draw inside them
+            if (typeof source === 'undefined') {
+              var tile = $('<div class="tbox"><canvas class="tile" id="tile' + ri + ci + '" height="' + tileH + '" width="' + tileW + '"></canvas></div>').get(0);
+              $("#box").append(tile);
+            } else {
+                var getit = $('#tile' + ri + ci).get(0);
+                context = getit.getContext('2d');
+                context.drawImage(source, ci*tileW, ri*tileH, tileW, tileH, 0, 0, tileW, tileH);
+            }
+          }
+        }
+    }
+    
+     
+  $(document).ready(function() {
+    $('#breakIt').click(function() {
+     $('body').jGravity({ 
+			target: 'canvas', 
+			ignoreClass: 'ignoreMe', weight: 22, depth: 5, drag: true
+		});
+  });
+  });
+</script>
+</body>
+</html>
