@@ -21,6 +21,10 @@ body {
 <div>
   <input type="button" id="breakIt" value="Break It!" />
 </div>
+<div>
+  <input type="button" id="putItBack" value="Put It Back!" />
+</div>
+<div>Video from <a href="http://www.bigbuckbunny.org/">Big Buck Bunny</a></div>
 
 <div style="display:none">
     <video id="source-vid" autoplay loop="true"> 
@@ -32,23 +36,40 @@ body {
 <script src="http://code.jquery.com/jquery-1.7.min.js"></script>
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js"></script>
 <script src="js/jGravity-min.js"></script>
+<script src="js/jquery.rotate.1-1.js"></script>
 <script type="text/javascript">
     ROWS = 3;
     COLS = 4;
     tiles(640, 360, ROWS, COLS);
     
+    //flag variable so that the orgiVidLoc objects are only created during the initial run 
+    var orginalFlag = true;
+    
+    //create object to hold name, x location and y location for canvas reset
+    function origVidLoc(vidName, xLoc, yLoc) {
+      this.vidName = vidName;
+      this.xLoc = xLoc;
+      this.yLoc = yLoc;
+    }
+    //Array to hold origVidLoc objects
+    var vidLocations = new Array();
+  
     var video = $("#source-vid")[0];
     updateVid(video);
 
     function updateVid(video) {
       tiles(640, 360, ROWS, COLS, video);
       setTimeout(function() { updateVid(video) }, 33);
-
     }
 
     function tiles(w, h, r, c, source) {
         var tileW = Math.round(w / c);
         var tileH = Math.round(h / r);
+        
+        //find offset of the #box div for reset
+        var p = $( "#box" );
+        var position = p.offset();
+        
         // set rows
         for(var ri = 0; ri < r; ri += 1) {
           //set columns
@@ -58,22 +79,47 @@ body {
               var tile = $('<div class="tbox"><canvas class="tile" id="tile' + ri + ci + '" height="' + tileH + '" width="' + tileW + '"></canvas></div>').get(0);
               $("#box").append(tile);
             } else {
+              // find original position of canvases 
+              if (orginalFlag) {
+              //created new origVidLoc objects and add them to the vidLocations array
+                anotherVid = new origVidLoc(('tile'+ri+ci), ri*tileH+position.top, ci*tileW+position.left);
+                vidLocations.push(anotherVid);
+              }
+                  
                 var getit = $('#tile' + ri + ci).get(0);
+                
                 context = getit.getContext('2d');
                 context.drawImage(source, ci*tileW, ri*tileH, tileW, tileH, 0, 0, tileW, tileH);
             }
           }
         }
+        orginalFlag = false;
     }
-    
      
   $(document).ready(function() {
-    $('#breakIt').click(function() {
-     $('body').jGravity({ 
+      $('#breakIt').click(function() {
+        $('body').jGravity({ 
 			target: 'canvas', 
-			ignoreClass: 'ignoreMe', weight: 22, depth: 5, drag: true
+			weight: 22, depth: 5, drag: true
 		});
-  });
+    });
+    
+    $('#putItBack').click(function() {
+     for (var item in vidLocations) {
+        //animating the resetting canvases... still looks a little clunky - using "step" to work through the degrees but not animating...
+        //rotate the canvas
+        $("#"+vidLocations[item].vidName).animate({textIndent: 0}, {
+          duration:1000,
+          step: function(now,fx) {
+            $("#"+vidLocations[item].vidName).css('-webkit-transform','rotate('+now+'deg)');
+          } 
+        },'linear');
+        //clone and replace existing canvases and animated them back to their original positions
+        $("#"+vidLocations[item].vidName).replaceWith($("#"+vidLocations[item].vidName).clone());
+        //reset xy position
+        $("#"+vidLocations[item].vidName).animate({top: vidLocations[item].xLoc, left: vidLocations[item].yLoc}); 
+      }
+    });  
   });
 </script>
 </body>
